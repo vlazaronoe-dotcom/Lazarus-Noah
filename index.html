@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#03030b">
+<title>UNIVERSO PREMIUM | Explora el cosmos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#03030b;color:white;font-family:Arial,sans-serif;overflow:hidden}
+#space{position:fixed;inset:0;z-index:0}
+canvas{display:block}
+.overlay{position:fixed;inset:0;z-index:2;pointer-events:none}
+header{display:flex;justify-content:space-between;align-items:center;padding:25px 7%;pointer-events:auto}
+.logo{font-size:17px;font-weight:900;letter-spacing:4px}
+.logo span{color:#8c74ff}
+.menu{font-size:11px;letter-spacing:2px;color:#aaa}
+.hero{position:absolute;top:50%;left:9%;transform:translateY(-50%);max-width:510px}
+.tag{font-size:10px;letter-spacing:5px;color:#a997ff;margin-bottom:24px}
+h1{font-size:clamp(43px,8vw,90px);line-height:.95;letter-spacing:-4px;font-weight:900}
+h1 span{color:#9381ff}
+.desc{color:#aaa;font-size:14px;line-height:1.8;max-width:370px;margin-top:24px}
+.actions{display:flex;gap:13px;margin-top:32px;pointer-events:auto;flex-wrap:wrap}
+button{padding:15px 23px;border:1px solid #7865e9;background:#7865e9;color:white;border-radius:3px;font-size:10px;letter-spacing:2px;font-weight:bold}
+button.secondary{background:transparent;border-color:#555}
+footer{position:absolute;bottom:25px;left:7%;right:7%;display:flex;justify-content:space-between;color:#777;font-size:9px;letter-spacing:2px}
+.hint{position:absolute;right:7%;bottom:85px;color:#aaa;font-size:10px;letter-spacing:2px;text-align:right}
+#loading{position:fixed;inset:0;background:#03030b;z-index:10;display:grid;place-items:center;letter-spacing:5px;font-size:12px;transition:opacity 1s}
+#loading span{color:#9583ff}
+@media(max-width:650px){
+header{padding:22px 6%}
+.hero{left:7%;top:43%;max-width:85%}
+h1{font-size:57px}
+.desc{font-size:12px;max-width:280px}
+.hint{right:7%;bottom:90px;font-size:8px}
+footer{font-size:7px;bottom:18px}
+}
+</style>
+</head>
+<body>
+<div id="loading">UNIVERSO <span>PREMIUM</span></div>
+<div id="space"></div>
+<div class="overlay">
+<header>
+<div class="logo">COSMOS<span>.</span></div>
+<div class="menu">EXPLORACIÓN 3D</div>
+</header>
+
+<section class="hero">
+<div class="tag">MÁS ALLÁ DE LO CONOCIDO</div>
+<h1>EL<br>INFINITO<br><span>TE ESPERA.</span></h1>
+<p class="desc">Descubre la inmensidad del universo. Un viaje interactivo por galaxias, estrellas y mundos que desafían la imaginación.</p>
+<div class="actions">
+<button id="explore">EXPLORAR UNIVERSO ↗</button>
+<button class="secondary" id="rotate">PAUSAR ROTACIÓN</button>
+</div>
+</section>
+
+<div class="hint">✦ ARRASTRA PARA GIRAR<br>PELLIZCA PARA ACERCAR</div>
+<footer>
+<span>UNIVERSO PREMIUM © 2026</span>
+<span>EXPLORA SIN LÍMITES ✦</span>
+</footer>
+</div>
+
+<script>
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x03030b,0.00065);
+
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,2000);
+camera.position.set(0,35,115);
+
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+document.getElementById("space").appendChild(renderer.domElement);
+
+const universe=new THREE.Group();
+scene.add(universe);
+
+// Estrellas lejanas
+const starGeo=new THREE.BufferGeometry();
+const starCount=3500;
+const positions=new Float32Array(starCount*3);
+for(let i=0;i<starCount;i++){
+positions[i*3]=(Math.random()-.5)*900;
+positions[i*3+1]=(Math.random()-.5)*500;
+positions[i*3+2]=(Math.random()-.5)*900;
+}
+starGeo.setAttribute("position",new THREE.BufferAttribute(positions,3));
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({
+color:0xffffff,size:0.8,transparent:true,opacity:.85
+}));
+scene.add(stars);
+
+// Galaxia espiral
+const galaxy=new THREE.Group();
+universe.add(galaxy);
+
+const colors=[0x8060ff,0x40baff,0xff70d8,0xffffff];
+const count=18000;
+const geo=new THREE.BufferGeometry();
+const pos=new Float32Array(count*3);
+const col=new Float32Array(count*3);
+
+for(let i=0;i<count;i++){
+const arm=i%4;
+const radius=Math.random()*48+2;
+const angle=arm*Math.PI/2+radius*.19+(Math.random()-.5)*.55;
+const spread=(Math.random()-.5)*radius*.17;
+pos[i*3]=Math.cos(angle)*radius+spread;
+pos[i*3+1]=(Math.random()-.5)*radius*.12;
+pos[i*3+2]=Math.sin(angle)*radius+spread;
+
+const c=new THREE.Color(colors[arm]);
+const intensity=.45+Math.random()*.7;
+col[i*3]=c.r*intensity;
+col[i*3+1]=c.g*intensity;
+col[i*3+2]=c.b*intensity;
+}
+geo.setAttribute("position",new THREE.BufferAttribute(pos,3));
+geo.setAttribute("color",new THREE.BufferAttribute(col,3));
+
+const dust=new THREE.Points(geo,new THREE.PointsMaterial({
+size:.65,vertexColors:true,transparent:true,opacity:.9,
+blending:THREE.AdditiveBlending,depthWrite:false
+}));
+galaxy.add(dust);
+
+// Núcleo luminoso
+const core=new THREE.Mesh(
+new THREE.SphereGeometry(3.8,48,48),
+new THREE.MeshBasicMaterial({color:0xffc8ff})
+);
+galaxy.add(core);
+
+const glow=new THREE.Mesh(
+new THREE.SphereGeometry(6,32,32),
+new THREE.MeshBasicMaterial({
+color:0x8a50ff,transparent:true,opacity:.12,
+blending:THREE.AdditiveBlending,depthWrite:false
+})
+);
+galaxy.add(glow);
+
+// Planeta
+const planetGroup=new THREE.Group();
+universe.add(planetGroup);
+planetGroup.position.set(48,8,0);
+
+const planet=new THREE.Mesh(
+new THREE.SphereGeometry(5,48,48),
+new THREE.MeshStandardMaterial({
+color:0x315cbb,roughness:.8,metalness:.1
+})
+);
+planetGroup.add(planet);
+
+const atmosphere=new THREE.Mesh(
+new THREE.SphereGeometry(5.5,32,32),
+new THREE.MeshBasicMaterial({
+color:0x529dff,transparent:true,opacity:.13,
+side:THREE.BackSide
+})
+);
+planetGroup.add(atmosphere);
+
+const ring=new THREE.Mesh(
+new THREE.TorusGeometry(7.5,.12,8,100),
+new THREE.MeshBasicMaterial({color:0xa78aff})
+);
+ring.rotation.x=1.2;
+planetGroup.add(ring);
+
+// Iluminación
+scene.add(new THREE.AmbientLight(0x7777bb,1.5));
+const light=new THREE.PointLight(0xffffff,150,300);
+light.position.set(0,15,20);
+scene.add(light);
+
+// Controles táctiles y ratón
+let dragging=false;
+let lastX=0,lastY=0;
+let rotationSpeed=.0015;
+let zoom=115;
+let lastPinch=0;
+
+renderer.domElement.addEventListener("pointerdown",e=>{
+dragging=true;lastX=e.clientX;lastY=e.clientY;
+renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener("pointermove",e=>{
+if(!dragging)return;
+universe.rotation.y+=(e.clientX-lastX)*.006;
+universe.rotation.x+=(e.clientY-lastY)*.004;
+universe.rotation.x=Math.max(-1.2,Math.min(1.2,universe.rotation.x));
+lastX=e.clientX;lastY=e.clientY;
+});
+renderer.domElement.addEventListener("pointerup",()=>dragging=false);
+renderer.domElement.addEventListener("pointercancel",()=>dragging=false);
+
+renderer.domElement.addEventListener("wheel",e=>{
+zoom=Math.max(55,Math.min(200,zoom+e.deltaY*.08));
+});
+
+document.getElementById("rotate").onclick=()=>{
+rotationSpeed=rotationSpeed===0?.0015:0;
+document.getElementById("rotate").textContent=
+rotationSpeed===0?"REANUDAR ROTACIÓN":"PAUSAR ROTACIÓN";
+};
+
+document.getElementById("explore").onclick=()=>{
+camera.position.set(0,24,75);
+zoom=75;
+};
+
+// Animación
+let clock=new THREE.Clock();
+function animate(){
+requestAnimationFrame(animate);
+const t=clock.getElapsedTime();
+
+if(rotationSpeed!==0)universe.rotation.y+=rotationSpeed;
+galaxy.rotation.z=Math.sin(t*.12)*.035;
+core.scale.setScalar(1+Math.sin(t*1.8)*.035);
+glow.scale.setScalar(1+Math.sin(t*1.3)*.08);
+planet.rotation.y+=.004;
+stars.rotation.y-=.00008;
+
+camera.position.z+=(zoom-camera.position.z)*.035;
+renderer.render(scene,camera);
+}
+animate();
+
+addEventListener("resize",()=>{
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth,innerHeight);
+});
+
+setTimeout(()=>{
+const loader=document.getElementById("loading");
+loader.style.opacity=0;
+setTimeout(()=>loader.remove(),1100);
+},1200);
+</script>
+</body>
+</html>
